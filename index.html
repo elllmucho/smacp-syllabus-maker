@@ -154,10 +154,10 @@
   }
   .field input, .field textarea, .field select {
     width: 100%; border: 1px solid var(--border-strong); border-radius: 6px; padding: 7px 10px;
-    font-size: 12.5px; outline: none; background: var(--surface-2); color: var(--text-primary);
-    font-family: inherit;
+    font-size: 11px; outline: none; background: var(--surface-2); color: var(--text-primary);
+    font-family: "Aptos Display", Calibri, Arial, sans-serif;
   }
-  .field textarea { resize: vertical; line-height: 1.5; font-size: 11.5px; }
+  .field textarea { resize: vertical; line-height: 1.5; font-size: 11px; }
   .field select { cursor: pointer; }
   .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--brand-navy); }
   .field-row { display: flex; gap: 8px; }
@@ -177,7 +177,7 @@
     background: none; border: none; color: var(--text-danger); font-size: 16px; cursor: pointer;
     line-height: 1; padding: 0 2px;
   }
-  .week-card .field input { font-size: 11.5px; padding: 5px 8px; }
+  .week-card .field input { font-size: 11px; padding: 5px 8px; }
   .week-card .field { margin-bottom: 6px; }
 
   .add-week-btn {
@@ -269,6 +269,7 @@
     <div class="topbar-actions">
       <span class="save-status" id="saveStatus"></span>
       <button class="print-btn" id="printBtn" type="button">⬇ Export as PDF</button>
+      <button class="btn-secondary" id="clearBtn" type="button">Clear</button>
     </div>
   </div>
 
@@ -285,14 +286,14 @@
       <div class="form-scroll">
         <!-- TAB 1: Course Info -->
         <div class="tab-panel active" data-panel="info">
-          <div class="field"><div class="field-label">Course Name</div><input id="courseName" placeholder="e.g., Engineering Mechanics"></div>
-          <div class="field"><div class="field-label">Course Code</div><input id="courseCode" placeholder="e.g., CE 201"></div>
+          <div class="field"><div class="field-label">Course Name</div><input id="courseName" placeholder="e.g., Fundamentals of Programming"></div>
+          <div class="field"><div class="field-label">Course Code</div><input id="courseCode" placeholder="e.g., ITE 101"></div>
           <div class="field-row">
-            <div class="field"><div class="field-label">Lec / Lab</div><input id="lecLab" placeholder="3 hrs Lec"></div>
+            <div class="field"><div class="field-label">Lec / Lab</div><input id="lecLab" placeholder="e.g., 2 hrs Lec, 3 hrs Lab"></div>
             <div class="field"><div class="field-label">Credit Units</div><input id="credit" placeholder="3"></div>
           </div>
-          <div class="field"><div class="field-label">Pre-Requisite</div><input id="preRequisite" placeholder="e.g., Math 102 or None"></div>
-          <div class="field"><div class="field-label">Program Outcome</div><textarea id="programOutcome" rows="3" placeholder="Program outcomes addressed by this course…"></textarea></div>
+          <div class="field"><div class="field-label">Pre-Requisite</div><input id="preRequisite" placeholder="e.g., ITE 100 or None"></div>
+          <div class="field"><div class="field-label">Program Outcome</div><textarea id="programOutcome" rows="8" placeholder="e.g., Apply knowledge of computing, science, and mathematics to solve IT problems; design and develop computing solutions for real-world requirements…"></textarea></div>
           <div class="field"><div class="field-label">Gender and Development (GAD) Statement</div><textarea id="gadStatement" rows="5" placeholder="Describe the GAD practices observed during instruction…"></textarea></div>
           <div class="field">
             <div class="field-label">College</div>
@@ -306,7 +307,7 @@
               <option value="College of Business Administration">College Of Business Administration</option>
             </select>
           </div>
-          <div class="field"><div class="field-label">Program</div><input id="program" placeholder="BS Civil Engineering"></div>
+          <div class="field"><div class="field-label">Program</div><input id="program" placeholder="BS Information Technology"></div>
           <div class="field-row">
             <div class="field"><div class="field-label">Semester</div><input id="semester" placeholder="SEM1"></div>
             <div class="field"><div class="field-label">Academic Year</div><input id="academicYear" placeholder="2026-2027"></div>
@@ -316,8 +317,15 @@
 
         <!-- TAB 2: Description & Outcomes -->
         <div class="tab-panel" data-panel="content">
-          <div class="field"><div class="field-label">A. Course Description</div><textarea id="courseDescription" rows="6" placeholder="Describe the course…"></textarea></div>
-          <div class="field"><div class="field-label">B. Course Learning Outcomes</div><textarea id="learningOutcomes" rows="8" placeholder="1. CLO one&#10;2. CLO two&#10;3. CLO three"></textarea></div>
+          <div class="field"><div class="field-label">A. Course Description</div><textarea id="courseDescription" rows="6" placeholder="e.g., This course introduces the fundamental concepts of programming logic and problem-solving using a high-level programming language. Topics include variables, control structures, functions, and basic data structures."></textarea></div>
+          <div class="field"><div class="field-label">B. Course Learning Outcomes</div><textarea id="learningOutcomes" rows="8" placeholder="1. Apply programming logic and control structures to solve computational problems&#10;2. Write, test, and debug programs using a high-level programming language&#10;3. Demonstrate teamwork and communication skills in developing a simple software project"></textarea></div>
+          <div class="section-divider"></div>
+          <p class="section-label">PO&ndash;CLO Mapping Matrix</p>
+          <p class="hint">Program outcome columns (I = Introduced, R = Reinforced, D = Demonstrated). Rename or add/remove to fit your program.</p>
+          <div id="poList"></div>
+          <button class="add-week-btn" id="addPoBtn" type="button">+ Add PO</button>
+          <div id="cloRowsList" style="margin-top:10px;"></div>
+          <button class="add-week-btn" id="addCloRowBtn" type="button">+ Add CLO Row</button>
         </div>
 
         <!-- TAB 3: Weekly Topics -->
@@ -329,7 +337,7 @@
 
         <!-- TAB 4: Assessment & Policies -->
         <div class="tab-panel" data-panel="assess">
-          <div class="field"><div class="field-label">D. Assessment Methods and Rubrics</div><textarea id="assessmentMethods" rows="6" placeholder="Describe quizzes, exams, projects, and rubrics…"></textarea></div>
+          <div class="field"><div class="field-label">E. Assessment Methods and Rubrics</div><textarea id="assessmentMethods" rows="6" placeholder="e.g., Quizzes, programming exercises, laboratory outputs, a midterm and final programming exam, and a capstone mini-project assessed using the rubrics below…"></textarea></div>
           <div class="section-divider"></div>
           <p class="section-label">Rubrics</p>
           <p class="hint">Performance levels (columns). Rename or add/remove to fit your rubric scale.</p>
@@ -338,15 +346,15 @@
           <div id="rubricsList" style="margin-top:10px;"></div>
           <button class="add-week-btn" id="addRubricBtn" type="button">+ Add Criterion</button>
           <div class="section-divider"></div>
-          <div class="field"><div class="field-label">E. Grading System</div><textarea id="gradingSystem" rows="6" placeholder="Quizzes: 20%&#10;Midterm Exam: 25%&#10;Final Exam: 25%&#10;Projects: 20%&#10;Attendance: 10%"></textarea></div>
-          <div class="field"><div class="field-label">F. Learning Resources</div><textarea id="learningResources" rows="4" placeholder="List textbooks and reference materials…"></textarea></div>
-          <div class="field"><div class="field-label">G. Course and Classroom Policies</div><textarea id="classroomPolicies" rows="6" placeholder="Attendance, academic integrity, submission rules…"></textarea></div>
+          <div class="field"><div class="field-label">F. Grading System</div><textarea id="gradingSystem" rows="6" placeholder="Quizzes: 20%&#10;Midterm Exam: 25%&#10;Final Exam: 25%&#10;Projects: 20%&#10;Attendance: 10%"></textarea></div>
+          <div class="field"><div class="field-label">G. Learning Resources</div><textarea id="learningResources" rows="4" placeholder="e.g., Deitel, P. &amp; Deitel, H. (2019). Java How to Program (11th ed.). Pearson.&#10;Programiz.com &ndash; online programming tutorials and practice problems"></textarea></div>
+          <div class="field"><div class="field-label">H. Course and Classroom Policies</div><textarea id="classroomPolicies" rows="6" placeholder="Attendance, academic integrity, submission rules…"></textarea></div>
         </div>
 
         <!-- TAB 5: Faculty -->
         <div class="tab-panel" data-panel="faculty">
-          <div class="field"><div class="field-label">Faculty Name</div><input id="facultyName" placeholder="Engr. Juan Dela Cruz"></div>
-          <div class="field"><div class="field-label">Room / Office</div><input id="facultyRoom" placeholder="Room 201, Engineering Building"></div>
+          <div class="field"><div class="field-label">Faculty Name</div><input id="facultyName" placeholder="e.g., Prof. Juan Dela Cruz"></div>
+          <div class="field"><div class="field-label">Room / Office</div><input id="facultyRoom" placeholder="e.g., Computer Laboratory 2, IT Building"></div>
           <div class="field"><div class="field-label">Email</div><input id="facultyEmail" placeholder="name@smacpcollege.ph"></div>
           <div class="section-divider"></div>
           <p class="section-label">Consultation Schedule</p>
@@ -355,7 +363,7 @@
           <div class="field"><div class="field-label">Online Consultation</div><input id="consultationOnline" placeholder="Google Meet / Email"></div>
           <div class="section-divider"></div>
           <p class="section-label">Signatories</p>
-          <div class="field"><div class="field-label">Coordinator Name</div><input id="coordinatorName" placeholder="e.g., Engr. Maria Santos"></div>
+          <div class="field"><div class="field-label">Coordinator Name</div><input id="coordinatorName" placeholder="e.g., Prof. Maria Santos"></div>
           <div class="field"><div class="field-label">Dean Name</div><input id="deanName" placeholder="e.g., Dr. Jose Reyes"></div>
         </div>
       </div>
@@ -391,21 +399,42 @@
     return rb;
   }
 
-  var state = {
-    courseName: "", courseCode: "", lecLab: "", credit: "", preRequisite: "",
-    programOutcome: "", college: "College of Engineering", program: "BS Civil Engineering",
-    revision: "01", semester: "SEM1", academicYear: "2026-2027",
-    gadStatement: "The following practices will be observed during all instructional activities and discussions this semester: Inclusive Language – use gender-neutral, non-sexist terms; Mutual Respect – treat everyone with equal respect, regardless of gender identity; Equal Opportunity – actively eliminate barriers caused by sexism to support personal and academic growth; and Gender Awareness – acknowledge and understand how differing social positions and traditional gender roles create distinct gender-related issues.",
-    courseDescription: "", learningOutcomes: "",
-    weeks: [Object.assign({}, EMPTY_WEEK, { week: "1" })],
-    assessmentMethods: "", gradingSystem: "", learningResources: "", classroomPolicies: "",
-    rubricLevels: defaultRubricLevels(),
-    rubrics: [makeEmptyRubric(defaultRubricLevels())],
-    facultyName: "", facultyRoom: "", facultyEmail: "",
-    consultationDay: "", consultationVenue: "", consultationOnline: "",
-    coordinatorName: "", deanName: "",
-    activeTab: "info",
-  };
+  function defaultProgramOutcomes() {
+    return [
+      { id: "po1", label: "PO1" },
+      { id: "po2", label: "PO2" },
+      { id: "po3", label: "PO3" },
+    ];
+  }
+
+  function makeEmptyCloRow(pos) {
+    var row = { clo: "", values: {} };
+    (pos || state.programOutcomes).forEach(function (po) { row.values[po.id] = ""; });
+    return row;
+  }
+
+  function getInitialState() {
+    return {
+      courseName: "", courseCode: "", lecLab: "", credit: "", preRequisite: "",
+      programOutcome: "", college: "College of Computer Studies", program: "BS Information Technology",
+      revision: "01", semester: "SEM1", academicYear: "2026-2027",
+      gadStatement: "The following practices will be observed during all instructional activities and discussions this semester: Inclusive Language – use gender-neutral, non-sexist terms; Mutual Respect – treat everyone with equal respect, regardless of gender identity; Equal Opportunity – actively eliminate barriers caused by sexism to support personal and academic growth; and Gender Awareness – acknowledge and understand how differing social positions and traditional gender roles create distinct gender-related issues.",
+      courseDescription: "", learningOutcomes: "",
+      weeks: [Object.assign({}, EMPTY_WEEK, { week: "1" })],
+      assessmentMethods: "", gradingSystem: "", learningResources: "",
+      classroomPolicies: "1. Attendance, Tardiness, and Maximum Allowable Absences\nRegular and punctual attendance is vital to mastering the complex competencies required in this course. In accordance with standard academic guidelines and institutional policies under CHED:\nTardiness Rule: Punctuality is a professional habit. Accumulating three (3) instances of lateness is strictly equivalent to one (1) absence.\nThe 20% Dropping Threshold: A student who accumulates absences exceeding 20% of the total contact hours prescribed for this course will be automatically dropped or given a failing grade (Dropped/FDA), regardless of their academic performance. For reference, this threshold translates as follows:\nFor a 3-unit lecture course (54 contact hours): Maximum allowable absences = 10.8 hours (approx. 3 absences for 3-hour classes).\nFor a 1-unit laboratory course (54 contact hours): Maximum allowable absences = 10.8 hours (approx. 3 absences for a 3-hour lab session).\n\n2. Excuse Letters and Emergency Protocols\nRecognizing that unforeseen emergencies happen, the following strict protocol must be followed to secure an official excuse for an absence:\nDocumentation Requirements: In the event of an emergency or sudden illness, the student must present an official Excuse Letter signed by their parent, guardian, or official boarding house head/guidance.\nMandatory Attachments: The letter will not be honored without valid supporting documents attached, such as:\nA Medical Certificate issued and signed by a licensed physician (for health-related emergencies).\nOfficial notices or relevant institutional/barangay documentation for other emergency cases.\nDeadlines for Submission: To qualify for make-up academic activities (such as quizzes or problem sets missed during the absence), these documents must be submitted to the instructor immediately upon the student's return to class (typically within 3 school days).\n\n3. Cooperative Learning Framework\nIn compliance with the Outcomes-Based Education (OBE) and learner-centered mandates of CMO No. 92, Series of 2017, this course shifts focus from passive listening to active, collaborative engagement to build core civil engineering competencies.\nActive and Teamwork Dynamics: Students will frequently engage in problem-based learning, engineering case studies, and laboratory/design modules. Peer collaboration is designed to mirror real-world engineering projects, requiring students to demonstrate leadership, reliability, and respect for diverse, multidisciplinary team perspectives (POs D and L).\nApplication of Modern Engineering Tools: Collaboration will often involve utilizing contemporary mathematical software, advanced computational calculators, and structural design/drafting tools (PO K). While these tools streamline teamwork workflows, teams must always back up software outputs with manual theoretical verification to ensure absolute technical accuracy.\nContinuous Improvement and Consultation: To support group and independent progression, students are highly encouraged to utilize the instructor's dedicated academic consultation hours early when tackling complex design problems. Students are also expected to actively participate in course assessment surveys to help evaluate and optimize instructional delivery (CQI framework).\n\n4. Academic Honesty Policy\nCivil engineering demands absolute ethical accountability, as public safety relies on the integrity of structural designs (POs F and I). In accordance with Section 6.2 of CMO No. 92 s. 2017, assessments are designed to measure a student's true ability to identify, formulate, and independently solve complex engineering problems.\nRigor in Logic vs. Rote Memorization: Quizzes, exams, and problem sets will regularly feature paraphrased, modified, or contextualized constraints to prevent simple rote memorization. Grading rubrics heavily prioritize the complete logical progression, engineering justification, and application of mathematical principles—not just the final numerical answer.\nZero Tolerance for Academic Dishonesty: Plagiarism, data fabrication, copying solutions, or sharing code, spreadsheets, and design files without explicit authorization violates the fundamental ethical responsibilities of the profession.\nDisciplinary Action: Any form of academic dishonesty will automatically result in a failing grade (0 or 5.0) for that specific assessment or the entire course, alongside immediate referral to the guidance office for disciplinary actions and further sanctions.",
+      rubricLevels: defaultRubricLevels(),
+      rubrics: [makeEmptyRubric(defaultRubricLevels())],
+      programOutcomes: defaultProgramOutcomes(),
+      cloRows: [makeEmptyCloRow(defaultProgramOutcomes())],
+      facultyName: "", facultyRoom: "", facultyEmail: "",
+      consultationDay: "", consultationVenue: "", consultationOnline: "",
+      coordinatorName: "", deanName: "",
+      activeTab: "info",
+    };
+  }
+
+  var state = getInitialState();
 
   function esc(v) {
     return String(v == null ? "" : v)
@@ -465,6 +494,8 @@
     renderWeeksForm();
     renderRubricLevelsForm();
     renderRubricsForm();
+    renderPOsForm();
+    renderCloRowsForm();
     activateTab(TAB_NAMES.indexOf(state.activeTab) !== -1 ? state.activeTab : "info");
     renderPreview();
   }
@@ -504,6 +535,27 @@
           if (rb.levels.hasOwnProperty("needsImprovement")) rb.levels.needsImprovement = r.needsImprovement || "";
         }
         return rb;
+      });
+    }
+    if (Array.isArray(data.programOutcomes) && data.programOutcomes.length > 0) {
+      state.programOutcomes = data.programOutcomes.map(function (l) {
+        return {
+          id: (l && typeof l.id === "string" && l.id) || genLevelId(),
+          label: (l && typeof l.label === "string") ? l.label : "",
+        };
+      });
+    }
+    if (Array.isArray(data.cloRows) && data.cloRows.length > 0) {
+      state.cloRows = data.cloRows.map(function (r) {
+        var row = makeEmptyCloRow(state.programOutcomes);
+        if (!r || typeof r !== "object") return row;
+        row.clo = typeof r.clo === "string" ? r.clo : "";
+        if (r.values && typeof r.values === "object") {
+          state.programOutcomes.forEach(function (po) {
+            if (typeof r.values[po.id] === "string") row.values[po.id] = r.values[po.id];
+          });
+        }
+        return row;
       });
     }
     if (typeof data.activeTab === "string") state.activeTab = data.activeTab;
@@ -607,11 +659,11 @@
       card.appendChild(head);
 
       card.appendChild(weekFieldRow("Week No.", i, "week", "e.g., 1"));
-      card.appendChild(weekFieldTextarea("Unit", i, "topics", "e.g., Unit 1 - Properties of concrete as a construction material\nUnit 1.1. Concrete\nUnit 1.2. Reinforcement\nUnit 1.3. Load Combinations\nUnit 1.4. Reduction Factors"));
+      card.appendChild(weekFieldTextarea("Unit", i, "topics", "e.g., Unit 1 - Introduction to Programming\nUnit 1.1. Variables and Data Types\nUnit 1.2. Operators and Expressions\nUnit 1.3. Control Structures\nUnit 1.4. Functions"));
       card.appendChild(weekFieldTextarea("Course Learning Outcome", i, "clo", "e.g., CLO1\nCLO2"));
-      card.appendChild(weekFieldTextarea("Teaching Learning Activities", i, "activities", "e.g., Lecture\nDiscussion"));
-      card.appendChild(weekFieldTextarea("Assessment Tool/s", i, "tools", "e.g., Quiz\nRecitation"));
-      card.appendChild(weekFieldTextarea("Learning Resources", i, "resources", "e.g., Chapter 1 – Textbook"));
+      card.appendChild(weekFieldTextarea("Teaching Learning Activities", i, "activities", "e.g., Lecture\nHands-on Programming Lab"));
+      card.appendChild(weekFieldTextarea("Assessment Tool/s", i, "tools", "e.g., Quiz\nProgramming Exercise"));
+      card.appendChild(weekFieldTextarea("Learning Resources", i, "resources", "e.g., Chapter 1 – Programming Textbook"));
 
       weeksList.appendChild(card);
     });
@@ -751,13 +803,163 @@
     renderPreview();
   });
 
+  /* ── PO columns (PO–CLO mapping matrix) ── */
+  var poList = document.getElementById("poList");
+
+  function renderPOsForm() {
+    poList.innerHTML = "";
+    state.programOutcomes.forEach(function (po, i) {
+      var row = document.createElement("div");
+      row.className = "field-row";
+      row.style.marginBottom = "6px";
+
+      var fieldWrap = document.createElement("div");
+      fieldWrap.className = "field";
+      fieldWrap.style.marginBottom = "0";
+      var input = document.createElement("input");
+      input.value = po.label;
+      input.placeholder = "e.g., PO1";
+      input.addEventListener("input", function (e) {
+        po.label = e.target.value;
+        scheduleRenderPreview();
+      });
+      fieldWrap.appendChild(input);
+
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "remove-week";
+      removeBtn.type = "button";
+      removeBtn.textContent = "×";
+      removeBtn.title = "Remove PO";
+      removeBtn.addEventListener("click", function () {
+        if (state.programOutcomes.length <= 1) return;
+        state.programOutcomes.splice(i, 1);
+        state.cloRows.forEach(function (row) { delete row.values[po.id]; });
+        renderPOsForm();
+        renderCloRowsForm();
+        renderPreview();
+      });
+
+      row.appendChild(fieldWrap);
+      row.appendChild(removeBtn);
+      poList.appendChild(row);
+    });
+  }
+
+  document.getElementById("addPoBtn").addEventListener("click", function () {
+    var newPo = { id: genLevelId(), label: "PO" + (state.programOutcomes.length + 1) };
+    state.programOutcomes.push(newPo);
+    state.cloRows.forEach(function (row) { row.values[newPo.id] = ""; });
+    renderPOsForm();
+    renderCloRowsForm();
+    renderPreview();
+  });
+
+  /* ── CLO rows (PO–CLO mapping matrix) ── */
+  var cloRowsList = document.getElementById("cloRowsList");
+
+  function renderCloRowsForm() {
+    cloRowsList.innerHTML = "";
+    state.cloRows.forEach(function (row, i) {
+      var card = document.createElement("div");
+      card.className = "week-card";
+
+      var head = document.createElement("div");
+      head.className = "week-card-head";
+      var title = document.createElement("span");
+      title.textContent = "CLO Row " + (i + 1);
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "remove-week";
+      removeBtn.type = "button";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", function () {
+        state.cloRows.splice(i, 1);
+        renderCloRowsForm();
+        renderPreview();
+      });
+      head.appendChild(title);
+      head.appendChild(removeBtn);
+      card.appendChild(head);
+
+      var cloWrap = document.createElement("div");
+      cloWrap.className = "field";
+      var cloLabel = document.createElement("div");
+      cloLabel.className = "field-label";
+      cloLabel.textContent = "CLO";
+      var cloInput = document.createElement("input");
+      cloInput.value = row.clo;
+      cloInput.placeholder = "e.g., CLO1";
+      cloInput.addEventListener("input", function (e) {
+        row.clo = e.target.value;
+        scheduleRenderPreview();
+      });
+      cloWrap.appendChild(cloLabel);
+      cloWrap.appendChild(cloInput);
+      card.appendChild(cloWrap);
+
+      state.programOutcomes.forEach(function (po) {
+        var wrap = document.createElement("div");
+        wrap.className = "field";
+        var label = document.createElement("div");
+        label.className = "field-label";
+        label.textContent = po.label || "PO";
+        var select = document.createElement("select");
+        ["", "I", "R", "D"].forEach(function (opt) {
+          var o = document.createElement("option");
+          o.value = opt;
+          o.textContent = opt || "—";
+          if (row.values[po.id] === opt) o.selected = true;
+          select.appendChild(o);
+        });
+        select.addEventListener("change", function (e) {
+          row.values[po.id] = e.target.value;
+          scheduleRenderPreview();
+        });
+        wrap.appendChild(label);
+        wrap.appendChild(select);
+        card.appendChild(wrap);
+      });
+
+      cloRowsList.appendChild(card);
+    });
+  }
+
+  document.getElementById("addCloRowBtn").addEventListener("click", function () {
+    state.cloRows.push(makeEmptyCloRow());
+    renderCloRowsForm();
+    renderPreview();
+  });
+
   /* ── print ── */
   document.getElementById("printBtn").addEventListener("click", function () {
     window.print();
   });
 
+  document.getElementById("clearBtn").addEventListener("click", function () {
+    if (!window.confirm("Clear all fields and start a new syllabus? This cannot be undone.")) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* storage unavailable */ }
+    state = getInitialState();
+    syncFormFromState();
+    setStatus("Cleared", 2500);
+  });
+
   /* ── preview (regenerated fully on every change; no focusable inputs here) ── */
   function multi(v) { return esc(v).replace(/\n/g, "<br>"); }
+
+  /* Auto-bolds numbered headings ("1. Title") and short "Label:" run-in headings
+     within an otherwise plain-text field, so policy-style content reads like the
+     GAD statement while staying a normal editable textarea (no HTML typed by the user). */
+  function formatPolicyText(v) {
+    var lines = String(v == null ? "" : v).split("\n");
+    return lines.map(function (line) {
+      if (line.trim() === "") return "";
+      if (/^\d+\.\s+.+$/.test(line)) return "<strong>" + esc(line) + "</strong>";
+      var m = line.match(/^([^:]{1,70}:)(\s*)([\s\S]*)$/);
+      if (m && !/[.!?]$/.test(m[1].slice(0, -1))) {
+        return "<strong>" + esc(m[1]) + "</strong>" + esc(m[2] + m[3]);
+      }
+      return esc(line);
+    }).join("<br>");
+  }
 
   function sectionHeading(letter, title) {
     return '<div style="border:1px solid #444;background:#d4d4d4;padding:2px 8px;font-weight:700;' +
@@ -791,8 +993,8 @@
             'that strengthens faith in God, nurtures individual multiple intelligences, pursues academic excellence, hones life ' +
             'skills, cultivates Filipino cultural pride, adopts digital citizenship, and fosters transformative leadership.</td>' +
           '<td style="border:1px solid #000;vertical-align:top;width:33.34%;"><div class="ii" style="padding:3px 5px;text-align:center;line-height:1.5;">' +
-            '<div style="font-weight:700;">' + esc(state.college || "COLLEGE OF ENGINEERING") + '</div>' +
-            '<div style="font-weight:700;">' + esc(state.program || "BS CIVIL ENGINEERING") + '</div>' +
+            '<div style="font-weight:700;">' + esc(state.college || "COLLEGE OF COMPUTER STUDIES") + '</div>' +
+            '<div style="font-weight:700;">' + esc(state.program || "BS INFORMATION TECHNOLOGY") + '</div>' +
             '<div>REVISION ' + esc(state.revision) + '</div>' +
             '<div>' + esc(state.semester) + ', AY ' + esc(state.academicYear) + '</div></div></td>' +
         '</tr><tr>' +
@@ -861,6 +1063,33 @@
       (rubricRows || '<tr><td colspan="' + (rubricLevelCount + 1) + '" style="border:1px solid #000;padding:6px;text-align:center;color:#bbb;font-style:italic;font-size:8px;">Add criteria in the Assessment & Policies tab…</td></tr>') +
       '</tbody></table>';
 
+    var cloRowsFiltered = s.cloRows.filter(function (r) {
+      return r.clo || Object.keys(r.values).some(function (id) { return r.values[id]; });
+    });
+    var poCloRows = cloRowsFiltered.map(function (r, i) {
+      var bg = i % 2 === 0 ? "#fff" : "#f8f8f8";
+      return '<tr style="background:' + bg + ';">' +
+        '<td class="ii" style="border:1px solid #000;padding:2px 5px;font-weight:700;">' + esc(r.clo) + '</td>' +
+        s.programOutcomes.map(function (po) {
+          return '<td class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;">' + esc(r.values[po.id]) + '</td>';
+        }).join("") +
+      '</tr>';
+    }).join("");
+
+    var poCount = s.programOutcomes.length;
+    var poCloCloWidth = 22;
+    var poColWidth = ((100 - poCloCloWidth) / Math.max(poCount, 1)).toFixed(2);
+
+    var poCloTable = '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr style="background:#ddd;">' +
+        '<th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7.5px;width:' + poCloCloWidth + '%;">CLO</th>' +
+        s.programOutcomes.map(function (po) {
+          return '<th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7.5px;width:' + poColWidth + '%;">' + esc(po.label).toUpperCase() + '</th>';
+        }).join("") +
+      '</tr></thead><tbody>' +
+      (poCloRows || '<tr><td colspan="' + (poCount + 1) + '" style="border:1px solid #000;padding:6px;text-align:center;color:#bbb;font-style:italic;font-size:8px;">Add CLO rows in the Description &amp; Outcomes tab…</td></tr>') +
+      '</tbody></table>' +
+      '<div style="font-size:7px;color:#555;margin-bottom:6px;">I = Introduced &nbsp; R = Reinforced &nbsp; D = Demonstrated</div>';
+
     var facultyRows = [
       ["NAME", s.facultyName, "DAY & TIME", s.consultationDay],
       ["ROOM / OFFICE", s.facultyRoom, "VENUE", s.consultationVenue],
@@ -883,7 +1112,10 @@
       sectionHeading("B", "COURSE LEARNING OUTCOMES") +
       sectionBody(multi(s.learningOutcomes), "Fill in the Description & Outcomes tab…"),
 
-      sectionHeading("C", "COURSE SYLLABUS") +
+      sectionHeading("C", "PO–CLO MAPPING MATRIX") +
+      poCloTable,
+
+      sectionHeading("D", "COURSE SYLLABUS") +
       '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr style="background:#ddd;">' +
         ["WEEK", "UNIT", "COURSE LEARNING OUTCOME", "TEACHING LEARNING ACTIVITIES", "ASSESSMENT TOOL/S", "LEARNING RESOURCES"]
           .map(function (h, i) {
@@ -892,20 +1124,20 @@
           }).join("") +
       '</tr></thead><tbody>' + weekRows + '</tbody></table>',
 
-      sectionHeading("D", "ASSESSMENT METHODS AND RUBRICS") +
+      sectionHeading("E", "ASSESSMENT METHODS AND RUBRICS") +
       sectionBody(multi(s.assessmentMethods), "Fill in the Assessment & Policies tab…") +
       rubricsTable,
 
-      sectionHeading("E", "GRADING SYSTEM") +
+      sectionHeading("F", "GRADING SYSTEM") +
       sectionBody(multi(s.gradingSystem), "Fill in the Assessment & Policies tab…"),
 
-      sectionHeading("F", "LEARNING RESOURCES") +
+      sectionHeading("G", "LEARNING RESOURCES") +
       sectionBody(multi(s.learningResources), "Fill in the Assessment & Policies tab…"),
 
-      sectionHeading("G", "COURSE AND CLASSROOM POLICIES") +
-      sectionBody(multi(s.classroomPolicies), "Fill in the Assessment & Policies tab…"),
+      sectionHeading("H", "COURSE AND CLASSROOM POLICIES") +
+      sectionBody(formatPolicyText(s.classroomPolicies), "Fill in the Assessment & Policies tab…"),
 
-      sectionHeading("H", "COURSE FACULTY / CONSULTATION HOURS") +
+      sectionHeading("I", "COURSE FACULTY / CONSULTATION HOURS") +
       '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:8px;"><tbody>' +
         '<tr><th style="border:1px solid #000;padding:2px 5px;text-align:center;width:20%;">FACULTY INFORMATION</th>' +
         '<th style="border:1px solid #000;padding:2px 5px;text-align:center;width:30%;">DETAILS</th>' +
@@ -918,7 +1150,7 @@
         [["Faculty", s.facultyName], ["Coordinator", s.coordinatorName], ["Dean", s.deanName]].map(function (pair) {
           return '<td style="text-align:center;padding:0 20px;width:33%;">' +
             '<div style="height:36px;border-bottom:1px solid #000;margin-bottom:4px;"></div>' +
-            '<div style="font-size:8px;font-weight:700;">' + esc(pair[1]) + '</div>' +
+            '<div class="ii" style="font-weight:700;">' + esc(pair[1]) + '</div>' +
             '<div style="font-size:7.5px;">' + pair[0] + '</div></td>';
         }).join("") +
       '</tr></tbody></table>',
@@ -943,6 +1175,8 @@
     renderWeeksForm();
     renderRubricLevelsForm();
     renderRubricsForm();
+    renderPOsForm();
+    renderCloRowsForm();
     renderPreview();
   }
 })();
