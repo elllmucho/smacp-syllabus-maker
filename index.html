@@ -321,11 +321,20 @@
           <div class="field"><div class="field-label">B. Course Learning Outcomes</div><textarea id="learningOutcomes" rows="8" placeholder="1. Apply programming logic and control structures to solve computational problems&#10;2. Write, test, and debug programs using a high-level programming language&#10;3. Demonstrate teamwork and communication skills in developing a simple software project"></textarea></div>
           <div class="section-divider"></div>
           <p class="section-label">PO&ndash;CLO Mapping Matrix</p>
-          <p class="hint">Program outcome columns (I = Introduced, R = Reinforced, D = Demonstrated). Rename or add/remove to fit your program.</p>
-          <div id="poList"></div>
-          <button class="add-week-btn" id="addPoBtn" type="button">+ Add PO</button>
-          <div id="cloRowsList" style="margin-top:10px;"></div>
-          <button class="add-week-btn" id="addCloRowBtn" type="button">+ Add CLO Row</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-secondary);margin-bottom:10px;cursor:pointer;">
+            <input type="checkbox" id="showPoCloMatrix" style="width:auto;">
+            Include this section in the syllabus
+          </label>
+          <div id="poCloMatrixFields">
+            <p class="hint">Mapping levels (e.g., I = Introduced). Rename, add, or remove to fit your program.</p>
+            <div id="cloLevelsList"></div>
+            <button class="add-week-btn" id="addCloLevelBtn" type="button">+ Add Level</button>
+            <p class="hint" style="margin-top:10px;">Program outcome columns. Rename or add/remove to fit your program.</p>
+            <div id="poList"></div>
+            <button class="add-week-btn" id="addPoBtn" type="button">+ Add PO</button>
+            <div id="cloRowsList" style="margin-top:10px;"></div>
+            <button class="add-week-btn" id="addCloRowBtn" type="button">+ Add CLO Row</button>
+          </div>
         </div>
 
         <!-- TAB 3: Weekly Topics -->
@@ -353,7 +362,11 @@
 
         <!-- TAB 5: Faculty -->
         <div class="tab-panel" data-panel="faculty">
-          <div class="field"><div class="field-label">Faculty Name</div><input id="facultyName" placeholder="e.g., Prof. Juan Dela Cruz"></div>
+          <div class="field-row">
+            <div class="field"><div class="field-label">Signature Position</div><input id="facultyPosition" placeholder="e.g., Faculty"></div>
+            <div class="field"><div class="field-label">Faculty Name</div><input id="facultyName" placeholder="e.g., Prof. Juan Dela Cruz"></div>
+          </div>
+          <div id="facultySignatureField"></div>
           <div class="field"><div class="field-label">Room / Office</div><input id="facultyRoom" placeholder="e.g., Computer Laboratory 2, IT Building"></div>
           <div class="field"><div class="field-label">Email</div><input id="facultyEmail" placeholder="name@smacpcollege.ph"></div>
           <div class="section-divider"></div>
@@ -363,8 +376,19 @@
           <div class="field"><div class="field-label">Online Consultation</div><input id="consultationOnline" placeholder="Google Meet / Email"></div>
           <div class="section-divider"></div>
           <p class="section-label">Signatories</p>
-          <div class="field"><div class="field-label">Coordinator Name</div><input id="coordinatorName" placeholder="e.g., Prof. Maria Santos"></div>
-          <div class="field"><div class="field-label">Dean Name</div><input id="deanName" placeholder="e.g., Dr. Jose Reyes"></div>
+          <div class="field-row">
+            <div class="field"><div class="field-label">Position</div><input id="coordinatorPosition" placeholder="e.g., Coordinator"></div>
+            <div class="field"><div class="field-label">Coordinator Name</div><input id="coordinatorName" placeholder="e.g., Prof. Maria Santos"></div>
+          </div>
+          <div id="coordinatorSignatureField"></div>
+          <div class="field-row">
+            <div class="field"><div class="field-label">Position</div><input id="deanPosition" placeholder="e.g., Dean"></div>
+            <div class="field"><div class="field-label">Dean Name</div><input id="deanName" placeholder="e.g., Dr. Jose Reyes"></div>
+          </div>
+          <div id="deanSignatureField"></div>
+          <p class="hint">Additional signatories (e.g., Program Chair, VP for Academics) appear after Dean on the signature line.</p>
+          <div id="signatoriesList"></div>
+          <button class="add-week-btn" id="addSignatoryBtn" type="button">+ Add Signatory</button>
         </div>
       </div>
     </div>
@@ -407,6 +431,14 @@
     ];
   }
 
+  function defaultCloMappingLevels() {
+    return [
+      { id: "lvl_i", code: "I", label: "Introduced" },
+      { id: "lvl_r", code: "R", label: "Reinforced" },
+      { id: "lvl_d", code: "D", label: "Demonstrated" },
+    ];
+  }
+
   function makeEmptyCloRow(pos) {
     var row = { clo: "", values: {} };
     (pos || state.programOutcomes).forEach(function (po) { row.values[po.id] = ""; });
@@ -426,10 +458,14 @@
       rubricLevels: defaultRubricLevels(),
       rubrics: [makeEmptyRubric(defaultRubricLevels())],
       programOutcomes: defaultProgramOutcomes(),
+      cloMappingLevels: defaultCloMappingLevels(),
       cloRows: [makeEmptyCloRow(defaultProgramOutcomes())],
-      facultyName: "", facultyRoom: "", facultyEmail: "",
+      showPoCloMatrix: true,
+      facultyName: "", facultyRoom: "", facultyEmail: "", facultySignature: "",
       consultationDay: "", consultationVenue: "", consultationOnline: "",
-      coordinatorName: "", deanName: "",
+      facultyPosition: "Faculty", coordinatorName: "", coordinatorPosition: "Coordinator", coordinatorSignature: "",
+      deanName: "", deanPosition: "Dean", deanSignature: "",
+      additionalSignatories: [],
       activeTab: "info",
     };
   }
@@ -472,9 +508,9 @@
     "college", "program", "revision", "semester", "academicYear", "gadStatement",
     "courseDescription", "learningOutcomes",
     "assessmentMethods", "gradingSystem", "learningResources", "classroomPolicies",
-    "facultyName", "facultyRoom", "facultyEmail",
+    "facultyName", "facultyPosition", "facultyRoom", "facultyEmail",
     "consultationDay", "consultationVenue", "consultationOnline",
-    "coordinatorName", "deanName",
+    "coordinatorName", "coordinatorPosition", "deanName", "deanPosition",
   ];
   simpleFields.forEach(function (key) {
     var el = document.getElementById(key);
@@ -491,11 +527,16 @@
     simpleFields.forEach(function (key) {
       document.getElementById(key).value = state[key] || "";
     });
+    document.getElementById("showPoCloMatrix").checked = state.showPoCloMatrix;
+    document.getElementById("poCloMatrixFields").style.display = state.showPoCloMatrix ? "" : "none";
     renderWeeksForm();
     renderRubricLevelsForm();
     renderRubricsForm();
+    renderCloLevelsForm();
     renderPOsForm();
     renderCloRowsForm();
+    renderFixedSignatureFields();
+    renderSignatoriesForm();
     activateTab(TAB_NAMES.indexOf(state.activeTab) !== -1 ? state.activeTab : "info");
     renderPreview();
   }
@@ -545,6 +586,15 @@
         };
       });
     }
+    if (Array.isArray(data.cloMappingLevels) && data.cloMappingLevels.length > 0) {
+      state.cloMappingLevels = data.cloMappingLevels.map(function (l) {
+        return {
+          id: (l && typeof l.id === "string" && l.id) || genLevelId(),
+          code: (l && typeof l.code === "string") ? l.code : "",
+          label: (l && typeof l.label === "string") ? l.label : "",
+        };
+      });
+    }
     if (Array.isArray(data.cloRows) && data.cloRows.length > 0) {
       state.cloRows = data.cloRows.map(function (r) {
         var row = makeEmptyCloRow(state.programOutcomes);
@@ -552,10 +602,28 @@
         row.clo = typeof r.clo === "string" ? r.clo : "";
         if (r.values && typeof r.values === "object") {
           state.programOutcomes.forEach(function (po) {
-            if (typeof r.values[po.id] === "string") row.values[po.id] = r.values[po.id];
+            var v = r.values[po.id];
+            if (typeof v !== "string" || v === "") return;
+            var byId = state.cloMappingLevels.some(function (lvl) { return lvl.id === v; });
+            if (byId) { row.values[po.id] = v; return; }
+            var byCode = state.cloMappingLevels.filter(function (lvl) { return lvl.code === v; })[0];
+            row.values[po.id] = byCode ? byCode.id : "";
           });
         }
         return row;
+      });
+    }
+    if (typeof data.showPoCloMatrix === "boolean") state.showPoCloMatrix = data.showPoCloMatrix;
+    ["facultySignature", "coordinatorSignature", "deanSignature"].forEach(function (key) {
+      if (typeof data[key] === "string") state[key] = data[key];
+    });
+    if (Array.isArray(data.additionalSignatories)) {
+      state.additionalSignatories = data.additionalSignatories.map(function (s) {
+        return {
+          position: (s && typeof s.position === "string") ? s.position : "",
+          name: (s && typeof s.name === "string") ? s.name : "",
+          signature: (s && typeof s.signature === "string") ? s.signature : "",
+        };
       });
     }
     if (typeof data.activeTab === "string") state.activeTab = data.activeTab;
@@ -803,6 +871,71 @@
     renderPreview();
   });
 
+  /* ── CLO mapping levels (I/R/D-style, PO–CLO mapping matrix) ── */
+  var cloLevelsList = document.getElementById("cloLevelsList");
+
+  function renderCloLevelsForm() {
+    cloLevelsList.innerHTML = "";
+    state.cloMappingLevels.forEach(function (lvl, i) {
+      var row = document.createElement("div");
+      row.className = "field-row";
+      row.style.marginBottom = "6px";
+
+      var codeWrap = document.createElement("div");
+      codeWrap.className = "field";
+      codeWrap.style.cssText = "margin-bottom:0;flex:0 0 60px;";
+      var codeInput = document.createElement("input");
+      codeInput.value = lvl.code;
+      codeInput.placeholder = "Code";
+      codeInput.addEventListener("input", function (e) {
+        lvl.code = e.target.value;
+        scheduleRenderPreview();
+      });
+      codeWrap.appendChild(codeInput);
+
+      var labelWrap = document.createElement("div");
+      labelWrap.className = "field";
+      labelWrap.style.marginBottom = "0";
+      var labelInput = document.createElement("input");
+      labelInput.value = lvl.label;
+      labelInput.placeholder = "e.g., Introduced";
+      labelInput.addEventListener("input", function (e) {
+        lvl.label = e.target.value;
+        scheduleRenderPreview();
+      });
+      labelWrap.appendChild(labelInput);
+
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "remove-week";
+      removeBtn.type = "button";
+      removeBtn.textContent = "×";
+      removeBtn.title = "Remove level";
+      removeBtn.addEventListener("click", function () {
+        if (state.cloMappingLevels.length <= 1) return;
+        state.cloMappingLevels.splice(i, 1);
+        state.cloRows.forEach(function (row) {
+          Object.keys(row.values).forEach(function (poId) {
+            if (row.values[poId] === lvl.id) row.values[poId] = "";
+          });
+        });
+        renderCloLevelsForm();
+        renderCloRowsForm();
+        renderPreview();
+      });
+
+      row.appendChild(codeWrap);
+      row.appendChild(labelWrap);
+      row.appendChild(removeBtn);
+      cloLevelsList.appendChild(row);
+    });
+  }
+
+  document.getElementById("addCloLevelBtn").addEventListener("click", function () {
+    state.cloMappingLevels.push({ id: genLevelId(), code: "", label: "" });
+    renderCloLevelsForm();
+    renderPreview();
+  });
+
   /* ── PO columns (PO–CLO mapping matrix) ── */
   var poList = document.getElementById("poList");
 
@@ -903,11 +1036,16 @@
         label.className = "field-label";
         label.textContent = po.label || "PO";
         var select = document.createElement("select");
-        ["", "I", "R", "D"].forEach(function (opt) {
+        var blankOpt = document.createElement("option");
+        blankOpt.value = "";
+        blankOpt.textContent = "—";
+        if (!row.values[po.id]) blankOpt.selected = true;
+        select.appendChild(blankOpt);
+        state.cloMappingLevels.forEach(function (lvl) {
           var o = document.createElement("option");
-          o.value = opt;
-          o.textContent = opt || "—";
-          if (row.values[po.id] === opt) o.selected = true;
+          o.value = lvl.id;
+          o.textContent = lvl.code || "?";
+          if (row.values[po.id] === lvl.id) o.selected = true;
           select.appendChild(o);
         });
         select.addEventListener("change", function (e) {
@@ -926,6 +1064,144 @@
   document.getElementById("addCloRowBtn").addEventListener("click", function () {
     state.cloRows.push(makeEmptyCloRow());
     renderCloRowsForm();
+    renderPreview();
+  });
+
+  /* ── e-signature upload (shared by fixed + additional signatories) ── */
+  function makeSignatureField(getSig, setSig) {
+    var wrap = document.createElement("div");
+    wrap.className = "field";
+    var label = document.createElement("div");
+    label.className = "field-label";
+    label.textContent = "E-Signature (optional)";
+    wrap.appendChild(label);
+
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:8px;";
+
+    var img = document.createElement("img");
+    img.style.cssText = "height:48px;max-width:130px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:#fff;padding:2px;";
+    img.style.display = getSig() ? "inline-block" : "none";
+    if (getSig()) img.src = getSig();
+
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.style.cssText = "flex:1;min-width:0;font-size:11px;";
+    fileInput.addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        var dataUrl = String(reader.result);
+        setSig(dataUrl);
+        img.src = dataUrl;
+        img.style.display = "inline-block";
+        scheduleRenderPreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    var clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "remove-week";
+    clearBtn.textContent = "×";
+    clearBtn.title = "Remove signature";
+    clearBtn.addEventListener("click", function () {
+      setSig("");
+      img.style.display = "none";
+      fileInput.value = "";
+      scheduleRenderPreview();
+    });
+
+    row.appendChild(img);
+    row.appendChild(fileInput);
+    row.appendChild(clearBtn);
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  function renderFixedSignatureFields() {
+    ["faculty", "coordinator", "dean"].forEach(function (who) {
+      var container = document.getElementById(who + "SignatureField");
+      container.innerHTML = "";
+      container.appendChild(makeSignatureField(
+        function () { return state[who + "Signature"]; },
+        function (v) { state[who + "Signature"] = v; }
+      ));
+    });
+  }
+
+  /* ── additional signatories ── */
+  var signatoriesList = document.getElementById("signatoriesList");
+
+  function renderSignatoriesForm() {
+    signatoriesList.innerHTML = "";
+    state.additionalSignatories.forEach(function (sig, i) {
+      var card = document.createElement("div");
+      card.className = "week-card";
+
+      var head = document.createElement("div");
+      head.className = "week-card-head";
+      var title = document.createElement("span");
+      title.textContent = "Signatory " + (i + 1);
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "remove-week";
+      removeBtn.type = "button";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", function () {
+        state.additionalSignatories.splice(i, 1);
+        renderSignatoriesForm();
+        renderPreview();
+      });
+      head.appendChild(title);
+      head.appendChild(removeBtn);
+      card.appendChild(head);
+
+      var posWrap = document.createElement("div");
+      posWrap.className = "field";
+      var posLabel = document.createElement("div");
+      posLabel.className = "field-label";
+      posLabel.textContent = "Position";
+      var posInput = document.createElement("input");
+      posInput.value = sig.position;
+      posInput.placeholder = "e.g., Program Chair";
+      posInput.addEventListener("input", function (e) {
+        sig.position = e.target.value;
+        scheduleRenderPreview();
+      });
+      posWrap.appendChild(posLabel);
+      posWrap.appendChild(posInput);
+      card.appendChild(posWrap);
+
+      var nameWrap = document.createElement("div");
+      nameWrap.className = "field";
+      var nameLabel = document.createElement("div");
+      nameLabel.className = "field-label";
+      nameLabel.textContent = "Name";
+      var nameInput = document.createElement("input");
+      nameInput.value = sig.name;
+      nameInput.placeholder = "e.g., Engr. Ana Cruz";
+      nameInput.addEventListener("input", function (e) {
+        sig.name = e.target.value;
+        scheduleRenderPreview();
+      });
+      nameWrap.appendChild(nameLabel);
+      nameWrap.appendChild(nameInput);
+      card.appendChild(nameWrap);
+
+      card.appendChild(makeSignatureField(
+        function () { return sig.signature; },
+        function (v) { sig.signature = v; }
+      ));
+
+      signatoriesList.appendChild(card);
+    });
+  }
+
+  document.getElementById("addSignatoryBtn").addEventListener("click", function () {
+    state.additionalSignatories.push({ position: "", name: "", signature: "" });
+    renderSignatoriesForm();
     renderPreview();
   });
 
@@ -1071,7 +1347,8 @@
       return '<tr style="background:' + bg + ';">' +
         '<td class="ii" style="border:1px solid #000;padding:2px 5px;font-weight:700;">' + esc(r.clo) + '</td>' +
         s.programOutcomes.map(function (po) {
-          return '<td class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;">' + esc(r.values[po.id]) + '</td>';
+          var lvl = s.cloMappingLevels.filter(function (l) { return l.id === r.values[po.id]; })[0];
+          return '<td class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;">' + esc(lvl ? lvl.code : "") + '</td>';
         }).join("") +
       '</tr>';
     }).join("");
@@ -1088,7 +1365,9 @@
       '</tr></thead><tbody>' +
       (poCloRows || '<tr><td colspan="' + (poCount + 1) + '" style="border:1px solid #000;padding:6px;text-align:center;color:#bbb;font-style:italic;font-size:8px;">Add CLO rows in the Description &amp; Outcomes tab…</td></tr>') +
       '</tbody></table>' +
-      '<div style="font-size:7px;color:#555;margin-bottom:6px;">I = Introduced &nbsp; R = Reinforced &nbsp; D = Demonstrated</div>';
+      '<div style="font-size:7px;color:#555;margin-bottom:6px;">' +
+        s.cloMappingLevels.map(function (l) { return esc(l.code) + " = " + esc(l.label); }).join(" &nbsp; ") +
+      '</div>';
 
     var facultyRows = [
       ["NAME", s.facultyName, "DAY & TIME", s.consultationDay],
@@ -1103,58 +1382,89 @@
         '<td class="ii" style="border:1px solid #000;padding:2px 5px;">' + esc(r[3]) + '</td></tr>';
     }).join("");
 
+    var letteredSections = [
+      {
+        visible: true, title: "COURSE DESCRIPTION",
+        body: sectionBody(multi(s.courseDescription), "Fill in the Description & Outcomes tab…"),
+      },
+      {
+        visible: true, title: "COURSE LEARNING OUTCOMES",
+        body: sectionBody(multi(s.learningOutcomes), "Fill in the Description & Outcomes tab…"),
+      },
+      {
+        visible: s.showPoCloMatrix, title: "PO–CLO MAPPING MATRIX",
+        body: poCloTable,
+      },
+      {
+        visible: true, title: "COURSE SYLLABUS",
+        body: '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr style="background:#ddd;">' +
+          ["WEEK", "UNIT", "COURSE LEARNING OUTCOME", "TEACHING LEARNING ACTIVITIES", "ASSESSMENT TOOL/S", "LEARNING RESOURCES"]
+            .map(function (h, i) {
+              var w = ["6%", "30%", "13%", "18%", "14%", "19%"][i];
+              return '<th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7.5px;width:' + w + ';">' + h + '</th>';
+            }).join("") +
+        '</tr></thead><tbody>' + weekRows + '</tbody></table>',
+      },
+      {
+        visible: true, title: "ASSESSMENT METHODS AND RUBRICS",
+        body: sectionBody(multi(s.assessmentMethods), "Fill in the Assessment & Policies tab…") + rubricsTable,
+      },
+      {
+        visible: true, title: "GRADING SYSTEM",
+        body: sectionBody(multi(s.gradingSystem), "Fill in the Assessment & Policies tab…"),
+      },
+      {
+        visible: true, title: "LEARNING RESOURCES",
+        body: sectionBody(multi(s.learningResources), "Fill in the Assessment & Policies tab…"),
+      },
+      {
+        visible: true, title: "COURSE AND CLASSROOM POLICIES",
+        body: sectionBody(formatPolicyText(s.classroomPolicies), "Fill in the Assessment & Policies tab…"),
+      },
+      {
+        visible: true, title: "COURSE FACULTY / CONSULTATION HOURS",
+        body: '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:8px;"><tbody>' +
+          '<tr><th style="border:1px solid #000;padding:2px 5px;text-align:center;width:20%;">FACULTY INFORMATION</th>' +
+          '<th style="border:1px solid #000;padding:2px 5px;text-align:center;width:30%;">DETAILS</th>' +
+          '<td style="border:none;width:2%;"></td>' +
+          '<th colspan="2" style="border:1px solid #000;padding:2px 5px;text-align:center;">CONSULTATION SCHEDULE</th></tr>' +
+          facultyRows +
+        '</tbody></table>',
+      },
+    ];
+
+    var letterIdx = 0;
+    var letteredHtml = letteredSections.filter(function (sec) { return sec.visible; }).map(function (sec) {
+      var letter = String.fromCharCode(65 + letterIdx++);
+      return sectionHeading(letter, sec.title) + sec.body;
+    });
+
     var bodySections = [
       '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tbody>' + infoRows + '</tbody></table>',
-
-      sectionHeading("A", "COURSE DESCRIPTION") +
-      sectionBody(multi(s.courseDescription), "Fill in the Description & Outcomes tab…"),
-
-      sectionHeading("B", "COURSE LEARNING OUTCOMES") +
-      sectionBody(multi(s.learningOutcomes), "Fill in the Description & Outcomes tab…"),
-
-      sectionHeading("C", "PO–CLO MAPPING MATRIX") +
-      poCloTable,
-
-      sectionHeading("D", "COURSE SYLLABUS") +
-      '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr style="background:#ddd;">' +
-        ["WEEK", "UNIT", "COURSE LEARNING OUTCOME", "TEACHING LEARNING ACTIVITIES", "ASSESSMENT TOOL/S", "LEARNING RESOURCES"]
-          .map(function (h, i) {
-            var w = ["6%", "30%", "13%", "18%", "14%", "19%"][i];
-            return '<th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7.5px;width:' + w + ';">' + h + '</th>';
+    ].concat(letteredHtml).concat([
+      (function () {
+        var signatories = [
+            { position: s.facultyPosition || "Faculty", name: s.facultyName, sig: s.facultySignature },
+            { position: s.coordinatorPosition || "Coordinator", name: s.coordinatorName, sig: s.coordinatorSignature },
+            { position: s.deanPosition || "Dean", name: s.deanName, sig: s.deanSignature },
+          ]
+          .concat(s.additionalSignatories
+            .filter(function (sig) { return sig.position || sig.name; })
+            .map(function (sig) { return { position: sig.position || "Signatory", name: sig.name, sig: sig.signature }; }));
+        var sigWidth = (100 / signatories.length).toFixed(2);
+        return '<table style="width:100%;margin-top:16px;"><tbody><tr>' +
+          signatories.map(function (item) {
+            var sigImg = item.sig
+              ? '<img src="' + item.sig + '" style="max-height:56px;max-width:95%;object-fit:contain;">'
+              : '';
+            return '<td style="text-align:center;padding:0 20px;width:' + sigWidth + '%;">' +
+              '<div style="height:58px;border-bottom:1px solid #000;margin-bottom:4px;display:flex;align-items:flex-end;justify-content:center;">' + sigImg + '</div>' +
+              '<div class="ii" style="font-weight:700;">' + esc(item.name) + '</div>' +
+              '<div style="font-size:7.5px;">' + esc(item.position) + '</div></td>';
           }).join("") +
-      '</tr></thead><tbody>' + weekRows + '</tbody></table>',
-
-      sectionHeading("E", "ASSESSMENT METHODS AND RUBRICS") +
-      sectionBody(multi(s.assessmentMethods), "Fill in the Assessment & Policies tab…") +
-      rubricsTable,
-
-      sectionHeading("F", "GRADING SYSTEM") +
-      sectionBody(multi(s.gradingSystem), "Fill in the Assessment & Policies tab…"),
-
-      sectionHeading("G", "LEARNING RESOURCES") +
-      sectionBody(multi(s.learningResources), "Fill in the Assessment & Policies tab…"),
-
-      sectionHeading("H", "COURSE AND CLASSROOM POLICIES") +
-      sectionBody(formatPolicyText(s.classroomPolicies), "Fill in the Assessment & Policies tab…"),
-
-      sectionHeading("I", "COURSE FACULTY / CONSULTATION HOURS") +
-      '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:8px;"><tbody>' +
-        '<tr><th style="border:1px solid #000;padding:2px 5px;text-align:center;width:20%;">FACULTY INFORMATION</th>' +
-        '<th style="border:1px solid #000;padding:2px 5px;text-align:center;width:30%;">DETAILS</th>' +
-        '<td style="border:none;width:2%;"></td>' +
-        '<th colspan="2" style="border:1px solid #000;padding:2px 5px;text-align:center;">CONSULTATION SCHEDULE</th></tr>' +
-        facultyRows +
-      '</tbody></table>',
-
-      '<table style="width:100%;margin-top:16px;"><tbody><tr>' +
-        [["Faculty", s.facultyName], ["Coordinator", s.coordinatorName], ["Dean", s.deanName]].map(function (pair) {
-          return '<td style="text-align:center;padding:0 20px;width:33%;">' +
-            '<div style="height:36px;border-bottom:1px solid #000;margin-bottom:4px;"></div>' +
-            '<div class="ii" style="font-weight:700;">' + esc(pair[1]) + '</div>' +
-            '<div style="font-size:7.5px;">' + pair[0] + '</div></td>';
-        }).join("") +
-      '</tr></tbody></table>',
-    ];
+        '</tr></tbody></table>';
+      })(),
+    ]);
 
     var html =
       '<table style="width:100%;border-collapse:collapse;"><thead><tr><td style="padding:0 0 6px 0;">' +
@@ -1169,14 +1479,25 @@
     saveDraftToStorage();
   }
 
+  document.getElementById("showPoCloMatrix").addEventListener("change", function (e) {
+    state.showPoCloMatrix = e.target.checked;
+    document.getElementById("poCloMatrixFields").style.display = state.showPoCloMatrix ? "" : "none";
+    renderPreview();
+  });
+
   if (loadDraftFromStorage()) {
     setStatus("Draft restored", 3000);
   } else {
     renderWeeksForm();
     renderRubricLevelsForm();
     renderRubricsForm();
+    renderCloLevelsForm();
     renderPOsForm();
     renderCloRowsForm();
+    renderFixedSignatureFields();
+    renderSignatoriesForm();
+    document.getElementById("showPoCloMatrix").checked = state.showPoCloMatrix;
+    document.getElementById("poCloMatrixFields").style.display = state.showPoCloMatrix ? "" : "none";
     renderPreview();
   }
 })();
