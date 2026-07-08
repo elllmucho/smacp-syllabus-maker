@@ -335,10 +335,24 @@
             <div id="cloRowsList" style="margin-top:10px;"></div>
             <button class="add-week-btn" id="addCloRowBtn" type="button">+ Add CLO Row</button>
           </div>
+          <div class="section-divider"></div>
+          <p class="section-label">Course Alignment with the UN Sustainable Development Goals</p>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-secondary);margin-bottom:10px;cursor:pointer;">
+            <input type="checkbox" id="showSdgAlignment" style="width:auto;">
+            Include this section in the syllabus
+          </label>
+          <div id="sdgAlignmentField">
+            <p class="hint">One goal per line. Delete any goals not relevant to this course, or edit the integration text.</p>
+            <div class="field"><textarea id="sdgAlignment" rows="14"></textarea></div>
+          </div>
         </div>
 
         <!-- TAB 3: Weekly Topics -->
         <div class="tab-panel" data-panel="weekly">
+          <p class="hint">Extra columns (e.g., a custom criteria) appear at the end of every week row and the printed table.</p>
+          <div id="weeklyColumnsList"></div>
+          <button class="add-week-btn" id="addWeeklyColumnBtn" type="button">+ Add Column</button>
+          <div class="section-divider"></div>
           <p class="hint">Add a row per week. Fill in each column directly.</p>
           <div id="weeksList"></div>
           <button class="add-week-btn" id="addWeekBtn" type="button">+ Add Week</button>
@@ -403,7 +417,15 @@
 (function () {
   "use strict";
 
-  var EMPTY_WEEK = { week: "", topics: "", clo: "", activities: "", tools: "", resources: "" };
+  function genColId() {
+    return "col" + Math.random().toString(36).slice(2, 9);
+  }
+
+  function makeEmptyWeek(cols) {
+    var w = { week: "", topics: "", clo: "", activities: "", tools: "", resources: "", extra: {} };
+    (cols || state.weeklyExtraColumns).forEach(function (c) { w.extra[c.id] = ""; });
+    return w;
+  }
 
   function defaultRubricLevels() {
     return [
@@ -452,7 +474,8 @@
       revision: "01", semester: "SEM1", academicYear: "2026-2027",
       gadStatement: "The following practices will be observed during all instructional activities and discussions this semester: Inclusive Language – use gender-neutral, non-sexist terms; Mutual Respect – treat everyone with equal respect, regardless of gender identity; Equal Opportunity – actively eliminate barriers caused by sexism to support personal and academic growth; and Gender Awareness – acknowledge and understand how differing social positions and traditional gender roles create distinct gender-related issues.",
       courseDescription: "", learningOutcomes: "",
-      weeks: [Object.assign({}, EMPTY_WEEK, { week: "1" })],
+      weeklyExtraColumns: [],
+      weeks: [Object.assign(makeEmptyWeek([]), { week: "1" })],
       assessmentMethods: "", gradingSystem: "", learningResources: "",
       classroomPolicies: "1. Attendance, Tardiness, and Maximum Allowable Absences\nRegular and punctual attendance is vital to mastering the complex competencies required in this course. In accordance with standard academic guidelines and institutional policies under CHED:\nTardiness Rule: Punctuality is a professional habit. Accumulating three (3) instances of lateness is strictly equivalent to one (1) absence.\nThe 20% Dropping Threshold: A student who accumulates absences exceeding 20% of the total contact hours prescribed for this course will be automatically dropped or given a failing grade (Dropped/FDA), regardless of their academic performance. For reference, this threshold translates as follows:\nFor a 3-unit lecture course (54 contact hours): Maximum allowable absences = 10.8 hours (approx. 3 absences for 3-hour classes).\nFor a 1-unit laboratory course (54 contact hours): Maximum allowable absences = 10.8 hours (approx. 3 absences for a 3-hour lab session).\n\n2. Excuse Letters and Emergency Protocols\nRecognizing that unforeseen emergencies happen, the following strict protocol must be followed to secure an official excuse for an absence:\nDocumentation Requirements: In the event of an emergency or sudden illness, the student must present an official Excuse Letter signed by their parent, guardian, or official boarding house head/guidance.\nMandatory Attachments: The letter will not be honored without valid supporting documents attached, such as:\nA Medical Certificate issued and signed by a licensed physician (for health-related emergencies).\nOfficial notices or relevant institutional/barangay documentation for other emergency cases.\nDeadlines for Submission: To qualify for make-up academic activities (such as quizzes or problem sets missed during the absence), these documents must be submitted to the instructor immediately upon the student's return to class (typically within 3 school days).\n\n3. Cooperative Learning Framework\nIn compliance with the Outcomes-Based Education (OBE) and learner-centered mandates of CMO No. 92, Series of 2017, this course shifts focus from passive listening to active, collaborative engagement to build core civil engineering competencies.\nActive and Teamwork Dynamics: Students will frequently engage in problem-based learning, engineering case studies, and laboratory/design modules. Peer collaboration is designed to mirror real-world engineering projects, requiring students to demonstrate leadership, reliability, and respect for diverse, multidisciplinary team perspectives (POs D and L).\nApplication of Modern Engineering Tools: Collaboration will often involve utilizing contemporary mathematical software, advanced computational calculators, and structural design/drafting tools (PO K). While these tools streamline teamwork workflows, teams must always back up software outputs with manual theoretical verification to ensure absolute technical accuracy.\nContinuous Improvement and Consultation: To support group and independent progression, students are highly encouraged to utilize the instructor's dedicated academic consultation hours early when tackling complex design problems. Students are also expected to actively participate in course assessment surveys to help evaluate and optimize instructional delivery (CQI framework).\n\n4. Academic Honesty Policy\nCivil engineering demands absolute ethical accountability, as public safety relies on the integrity of structural designs (POs F and I). In accordance with Section 6.2 of CMO No. 92 s. 2017, assessments are designed to measure a student's true ability to identify, formulate, and independently solve complex engineering problems.\nRigor in Logic vs. Rote Memorization: Quizzes, exams, and problem sets will regularly feature paraphrased, modified, or contextualized constraints to prevent simple rote memorization. Grading rubrics heavily prioritize the complete logical progression, engineering justification, and application of mathematical principles—not just the final numerical answer.\nZero Tolerance for Academic Dishonesty: Plagiarism, data fabrication, copying solutions, or sharing code, spreadsheets, and design files without explicit authorization violates the fundamental ethical responsibilities of the profession.\nDisciplinary Action: Any form of academic dishonesty will automatically result in a failing grade (0 or 5.0) for that specific assessment or the entire course, alongside immediate referral to the guidance office for disciplinary actions and further sanctions.",
       rubricLevels: defaultRubricLevels(),
@@ -461,6 +484,26 @@
       cloMappingLevels: defaultCloMappingLevels(),
       cloRows: [makeEmptyCloRow(defaultProgramOutcomes())],
       showPoCloMatrix: true,
+      showSdgAlignment: true,
+      sdgAlignment: [
+        "1. No Poverty\tInclude topics on economic inequality, poverty alleviation, and inclusive economic growth.",
+        "2. Zero Hunger\tDiscuss food security, sustainable agriculture, and nutrition systems.",
+        "3. Good Health and Well-Being\tCover health promotion, mental well-being, and universal healthcare systems.",
+        "4. Quality Education\tIntegrate equitable access to education, lifelong learning, and inclusive teaching practices.",
+        "5. Gender Equality\tHighlight issues of gender equity, women's empowerment, and reducing gender-based discrimination.",
+        "6. Clean Water and Sanitation\tAddress water resource management, sanitation systems, and access to clean water.",
+        "7. Affordable and Clean Energy\tExplore renewable energy sources, energy efficiency, and sustainable energy solutions.",
+        "8. Decent Work and Economic Growth\tFocus on employment opportunities, workplace safety, and sustainable economic policies.",
+        "9. Industry, Innovation, and Infrastructure\tDiscuss sustainable infrastructure, industrialization, and innovation.",
+        "10. Reduced Inequalities\tAnalyze policies and practices that address income and opportunity disparities.",
+        "11. Sustainable Cities and Communities\tExamine urban planning, disaster resilience, and sustainable living solutions.",
+        "12. Responsible Consumption and Production\tAddress waste reduction, sustainable consumption, and ethical production practices.",
+        "13. Climate Action\tDiscuss mitigation and adaptation strategies for climate change.",
+        "14. Life Below Water\tExplore marine conservation, sustainable fisheries, and ocean health.",
+        "15. Life on Land\tCover biodiversity conservation, reforestation, and land-use practices.",
+        "16. Peace, Justice, and Strong Institutions\tPromote social justice, conflict resolution, and strong governance.",
+        "17. Partnerships for the Goals\tInclude topics on global collaboration, partnership building, and cross-sectoral initiatives.",
+      ].join("\n"),
       facultyName: "", facultyRoom: "", facultyEmail: "", facultySignature: "",
       consultationDay: "", consultationVenue: "", consultationOnline: "",
       facultyPosition: "Faculty", coordinatorName: "", coordinatorPosition: "Coordinator", coordinatorSignature: "",
@@ -506,7 +549,7 @@
   var simpleFields = [
     "courseName", "courseCode", "lecLab", "credit", "preRequisite", "programOutcome",
     "college", "program", "revision", "semester", "academicYear", "gadStatement",
-    "courseDescription", "learningOutcomes",
+    "courseDescription", "learningOutcomes", "sdgAlignment",
     "assessmentMethods", "gradingSystem", "learningResources", "classroomPolicies",
     "facultyName", "facultyPosition", "facultyRoom", "facultyEmail",
     "consultationDay", "consultationVenue", "consultationOnline",
@@ -529,6 +572,9 @@
     });
     document.getElementById("showPoCloMatrix").checked = state.showPoCloMatrix;
     document.getElementById("poCloMatrixFields").style.display = state.showPoCloMatrix ? "" : "none";
+    document.getElementById("showSdgAlignment").checked = state.showSdgAlignment;
+    document.getElementById("sdgAlignmentField").style.display = state.showSdgAlignment ? "" : "none";
+    renderWeeklyColumnsForm();
     renderWeeksForm();
     renderRubricLevelsForm();
     renderRubricsForm();
@@ -546,9 +592,27 @@
     simpleFields.forEach(function (key) {
       if (typeof data[key] === "string") state[key] = data[key];
     });
+    if (Array.isArray(data.weeklyExtraColumns)) {
+      state.weeklyExtraColumns = data.weeklyExtraColumns.map(function (c) {
+        return {
+          id: (c && typeof c.id === "string" && c.id) || genColId(),
+          label: (c && typeof c.label === "string") ? c.label : "",
+        };
+      });
+    }
     if (Array.isArray(data.weeks) && data.weeks.length > 0) {
       state.weeks = data.weeks.map(function (w) {
-        return Object.assign({}, EMPTY_WEEK, w && typeof w === "object" ? w : {});
+        var week = makeEmptyWeek(state.weeklyExtraColumns);
+        if (!w || typeof w !== "object") return week;
+        ["week", "topics", "clo", "activities", "tools", "resources"].forEach(function (key) {
+          if (typeof w[key] === "string") week[key] = w[key];
+        });
+        if (w.extra && typeof w.extra === "object") {
+          state.weeklyExtraColumns.forEach(function (c) {
+            if (typeof w.extra[c.id] === "string") week.extra[c.id] = w.extra[c.id];
+          });
+        }
+        return week;
       });
     }
     if (Array.isArray(data.rubricLevels) && data.rubricLevels.length > 0) {
@@ -614,6 +678,7 @@
       });
     }
     if (typeof data.showPoCloMatrix === "boolean") state.showPoCloMatrix = data.showPoCloMatrix;
+    if (typeof data.showSdgAlignment === "boolean") state.showSdgAlignment = data.showSdgAlignment;
     ["facultySignature", "coordinatorSignature", "deanSignature"].forEach(function (key) {
       if (typeof data[key] === "string") state[key] = data[key];
     });
@@ -703,6 +768,74 @@
     return wrap;
   }
 
+  function weekExtraFieldTextarea(i, col) {
+    var wrap = document.createElement("div");
+    wrap.className = "field";
+    var label = document.createElement("div");
+    label.className = "field-label";
+    label.textContent = col.label || "Column";
+    var textarea = document.createElement("textarea");
+    textarea.rows = 3;
+    textarea.value = state.weeks[i].extra[col.id] || "";
+    textarea.addEventListener("input", function (e) {
+      state.weeks[i].extra[col.id] = e.target.value;
+      scheduleRenderPreview();
+    });
+    wrap.appendChild(label);
+    wrap.appendChild(textarea);
+    return wrap;
+  }
+
+  /* ── weekly table extra columns ── */
+  var weeklyColumnsList = document.getElementById("weeklyColumnsList");
+
+  function renderWeeklyColumnsForm() {
+    weeklyColumnsList.innerHTML = "";
+    state.weeklyExtraColumns.forEach(function (col, i) {
+      var row = document.createElement("div");
+      row.className = "field-row";
+      row.style.marginBottom = "6px";
+
+      var fieldWrap = document.createElement("div");
+      fieldWrap.className = "field";
+      fieldWrap.style.marginBottom = "0";
+      var input = document.createElement("input");
+      input.value = col.label;
+      input.placeholder = "e.g., Values Integration";
+      input.addEventListener("input", function (e) {
+        col.label = e.target.value;
+        scheduleRenderPreview();
+      });
+      fieldWrap.appendChild(input);
+
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "remove-week";
+      removeBtn.type = "button";
+      removeBtn.textContent = "×";
+      removeBtn.title = "Remove column";
+      removeBtn.addEventListener("click", function () {
+        state.weeklyExtraColumns.splice(i, 1);
+        state.weeks.forEach(function (wk) { delete wk.extra[col.id]; });
+        renderWeeklyColumnsForm();
+        renderWeeksForm();
+        renderPreview();
+      });
+
+      row.appendChild(fieldWrap);
+      row.appendChild(removeBtn);
+      weeklyColumnsList.appendChild(row);
+    });
+  }
+
+  document.getElementById("addWeeklyColumnBtn").addEventListener("click", function () {
+    var newCol = { id: genColId(), label: "Column " + (state.weeklyExtraColumns.length + 1) };
+    state.weeklyExtraColumns.push(newCol);
+    state.weeks.forEach(function (wk) { wk.extra[newCol.id] = ""; });
+    renderWeeklyColumnsForm();
+    renderWeeksForm();
+    renderPreview();
+  });
+
   function renderWeeksForm() {
     weeksList.innerHTML = "";
     state.weeks.forEach(function (wk, i) {
@@ -732,13 +865,16 @@
       card.appendChild(weekFieldTextarea("Teaching Learning Activities", i, "activities", "e.g., Lecture\nHands-on Programming Lab"));
       card.appendChild(weekFieldTextarea("Assessment Tool/s", i, "tools", "e.g., Quiz\nProgramming Exercise"));
       card.appendChild(weekFieldTextarea("Learning Resources", i, "resources", "e.g., Chapter 1 – Programming Textbook"));
+      state.weeklyExtraColumns.forEach(function (col) {
+        card.appendChild(weekExtraFieldTextarea(i, col));
+      });
 
       weeksList.appendChild(card);
     });
   }
 
   document.getElementById("addWeekBtn").addEventListener("click", function () {
-    state.weeks.push(Object.assign({}, EMPTY_WEEK, { week: String(state.weeks.length + 1) }));
+    state.weeks.push(Object.assign(makeEmptyWeek(), { week: String(state.weeks.length + 1) }));
     renderWeeksForm();
     renderPreview();
   });
@@ -1237,6 +1373,26 @@
     }).join("<br>");
   }
 
+  /* Renders the SDG alignment list as a two-column table (goal name | integration
+     text), matching the reference layout rather than a plain paragraph. */
+  function buildSdgTable(v) {
+    var lines = String(v == null ? "" : v).split("\n").filter(function (l) { return l.trim() !== ""; });
+    var rows = lines.map(function (line) {
+      var m = line.match(/^(\d+\.\s*[^\t]+?)(?:\t+|\s{2,})\s*(.*)$/);
+      var goal = m ? m[1].trim() : line.trim();
+      var desc = m ? m[2].trim() : "";
+      return '<tr>' +
+        '<td class="ii" style="border:1px solid #000;padding:4px 8px;font-weight:700;width:32%;vertical-align:top;">' + esc(goal) + '</td>' +
+        '<td class="ii" style="border:1px solid #000;padding:4px 8px;vertical-align:top;">&#9744;&nbsp;' + esc(desc) + '</td>' +
+      '</tr>';
+    }).join("");
+    return '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">' +
+      '<thead><tr><th colspan="2" style="border:1px solid #000;background:#ddd;padding:4px 8px;text-align:left;font-size:8px;">United Nations Sustainable Development Goals</th></tr></thead>' +
+      '<tbody>' +
+      (rows || '<tr><td colspan="2" style="border:1px solid #000;padding:6px;text-align:center;color:#bbb;font-style:italic;font-size:8px;">Add goals in the Description &amp; Outcomes tab…</td></tr>') +
+      '</tbody></table>';
+  }
+
   function sectionHeading(letter, title) {
     return '<div style="border:1px solid #444;background:#d4d4d4;padding:2px 8px;font-weight:700;' +
       'font-size:9px;letter-spacing:0.3px;font-family:Arial,Helvetica,sans-serif;">' +
@@ -1310,9 +1466,13 @@
             '<td class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;vertical-align:top;">' + multi(wk.clo) + '</td>' +
             '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.activities) + '</td>' +
             '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.tools) + '</td>' +
-            '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.resources) + '</td></tr>';
+            '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.resources) + '</td>' +
+            s.weeklyExtraColumns.map(function (col) {
+              return '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.extra[col.id]) + '</td>';
+            }).join("") +
+          '</tr>';
         }).join("")
-      : '<tr><td colspan="6" style="border:1px solid #000;padding:6px;text-align:center;color:#bbb;font-style:italic;font-size:8px;">Add weeks in the Weekly Topics tab…</td></tr>';
+      : '<tr><td colspan="' + (6 + s.weeklyExtraColumns.length) + '" style="border:1px solid #000;padding:6px;text-align:center;color:#bbb;font-style:italic;font-size:8px;">Add weeks in the Weekly Topics tab…</td></tr>';
 
     var rubricRows = s.rubrics.filter(function (rb) {
       return rb.criteria || Object.keys(rb.levels).some(function (id) { return rb.levels[id]; });
@@ -1396,14 +1556,26 @@
         body: poCloTable,
       },
       {
+        visible: s.showSdgAlignment, title: "COURSE ALIGNMENT WITH THE UNITED NATIONS SUSTAINABLE DEVELOPMENT GOALS",
+        body: buildSdgTable(s.sdgAlignment),
+      },
+      {
         visible: true, title: "COURSE SYLLABUS",
-        body: '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr style="background:#ddd;">' +
-          ["WEEK", "UNIT", "COURSE LEARNING OUTCOME", "TEACHING LEARNING ACTIVITIES", "ASSESSMENT TOOL/S", "LEARNING RESOURCES"]
-            .map(function (h, i) {
-              var w = ["6%", "30%", "13%", "18%", "14%", "19%"][i];
-              return '<th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7.5px;width:' + w + ';">' + h + '</th>';
+        body: (function () {
+          var baseHeaders = ["WEEK", "UNIT", "COURSE LEARNING OUTCOME", "TEACHING LEARNING ACTIVITIES", "ASSESSMENT TOOL/S", "LEARNING RESOURCES"];
+          var baseWidths = [6, 30, 13, 18, 14, 19];
+          var extraCount = s.weeklyExtraColumns.length;
+          var extraWidthEach = extraCount > 0 ? Math.min(16, 24 / extraCount) : 0;
+          var scale = (100 - extraWidthEach * extraCount) / 100;
+          var headers = baseHeaders.concat(s.weeklyExtraColumns.map(function (c) { return c.label || "COLUMN"; }));
+          var widths = baseWidths.map(function (w) { return (w * scale).toFixed(2); })
+            .concat(s.weeklyExtraColumns.map(function () { return extraWidthEach.toFixed(2); }));
+          return '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr style="background:#ddd;">' +
+            headers.map(function (h, i) {
+              return '<th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7.5px;width:' + widths[i] + '%;">' + esc(h).toUpperCase() + '</th>';
             }).join("") +
-        '</tr></thead><tbody>' + weekRows + '</tbody></table>',
+          '</tr></thead><tbody>' + weekRows + '</tbody></table>';
+        })(),
       },
       {
         visible: true, title: "ASSESSMENT METHODS AND RUBRICS",
@@ -1485,9 +1657,16 @@
     renderPreview();
   });
 
+  document.getElementById("showSdgAlignment").addEventListener("change", function (e) {
+    state.showSdgAlignment = e.target.checked;
+    document.getElementById("sdgAlignmentField").style.display = state.showSdgAlignment ? "" : "none";
+    renderPreview();
+  });
+
   if (loadDraftFromStorage()) {
     setStatus("Draft restored", 3000);
   } else {
+    renderWeeklyColumnsForm();
     renderWeeksForm();
     renderRubricLevelsForm();
     renderRubricsForm();
@@ -1498,6 +1677,8 @@
     renderSignatoriesForm();
     document.getElementById("showPoCloMatrix").checked = state.showPoCloMatrix;
     document.getElementById("poCloMatrixFields").style.display = state.showPoCloMatrix ? "" : "none";
+    document.getElementById("showSdgAlignment").checked = state.showSdgAlignment;
+    document.getElementById("sdgAlignmentField").style.display = state.showSdgAlignment ? "" : "none";
     renderPreview();
   }
 })();
