@@ -342,8 +342,9 @@
             Include this section in the syllabus
           </label>
           <div id="sdgAlignmentField">
-            <p class="hint">One goal per line. Delete any goals not relevant to this course, or edit the integration text.</p>
-            <div class="field"><textarea id="sdgAlignment" rows="14"></textarea></div>
+            <p class="hint">Remove any goals not relevant to this course, or edit the integration text.</p>
+            <div id="sdgGoalsList"></div>
+            <button class="add-week-btn" id="addSdgGoalBtn" type="button">+ Add Goal</button>
           </div>
         </div>
 
@@ -485,25 +486,25 @@
       cloRows: [makeEmptyCloRow(defaultProgramOutcomes())],
       showPoCloMatrix: true,
       showSdgAlignment: true,
-      sdgAlignment: [
-        "1. No Poverty\tInclude topics on economic inequality, poverty alleviation, and inclusive economic growth.",
-        "2. Zero Hunger\tDiscuss food security, sustainable agriculture, and nutrition systems.",
-        "3. Good Health and Well-Being\tCover health promotion, mental well-being, and universal healthcare systems.",
-        "4. Quality Education\tIntegrate equitable access to education, lifelong learning, and inclusive teaching practices.",
-        "5. Gender Equality\tHighlight issues of gender equity, women's empowerment, and reducing gender-based discrimination.",
-        "6. Clean Water and Sanitation\tAddress water resource management, sanitation systems, and access to clean water.",
-        "7. Affordable and Clean Energy\tExplore renewable energy sources, energy efficiency, and sustainable energy solutions.",
-        "8. Decent Work and Economic Growth\tFocus on employment opportunities, workplace safety, and sustainable economic policies.",
-        "9. Industry, Innovation, and Infrastructure\tDiscuss sustainable infrastructure, industrialization, and innovation.",
-        "10. Reduced Inequalities\tAnalyze policies and practices that address income and opportunity disparities.",
-        "11. Sustainable Cities and Communities\tExamine urban planning, disaster resilience, and sustainable living solutions.",
-        "12. Responsible Consumption and Production\tAddress waste reduction, sustainable consumption, and ethical production practices.",
-        "13. Climate Action\tDiscuss mitigation and adaptation strategies for climate change.",
-        "14. Life Below Water\tExplore marine conservation, sustainable fisheries, and ocean health.",
-        "15. Life on Land\tCover biodiversity conservation, reforestation, and land-use practices.",
-        "16. Peace, Justice, and Strong Institutions\tPromote social justice, conflict resolution, and strong governance.",
-        "17. Partnerships for the Goals\tInclude topics on global collaboration, partnership building, and cross-sectoral initiatives.",
-      ].join("\n"),
+      sdgGoals: [
+        ["1. No Poverty", "Include topics on economic inequality, poverty alleviation, and inclusive economic growth."],
+        ["2. Zero Hunger", "Discuss food security, sustainable agriculture, and nutrition systems."],
+        ["3. Good Health and Well-Being", "Cover health promotion, mental well-being, and universal healthcare systems."],
+        ["4. Quality Education", "Integrate equitable access to education, lifelong learning, and inclusive teaching practices."],
+        ["5. Gender Equality", "Highlight issues of gender equity, women's empowerment, and reducing gender-based discrimination."],
+        ["6. Clean Water and Sanitation", "Address water resource management, sanitation systems, and access to clean water."],
+        ["7. Affordable and Clean Energy", "Explore renewable energy sources, energy efficiency, and sustainable energy solutions."],
+        ["8. Decent Work and Economic Growth", "Focus on employment opportunities, workplace safety, and sustainable economic policies."],
+        ["9. Industry, Innovation, and Infrastructure", "Discuss sustainable infrastructure, industrialization, and innovation."],
+        ["10. Reduced Inequalities", "Analyze policies and practices that address income and opportunity disparities."],
+        ["11. Sustainable Cities and Communities", "Examine urban planning, disaster resilience, and sustainable living solutions."],
+        ["12. Responsible Consumption and Production", "Address waste reduction, sustainable consumption, and ethical production practices."],
+        ["13. Climate Action", "Discuss mitigation and adaptation strategies for climate change."],
+        ["14. Life Below Water", "Explore marine conservation, sustainable fisheries, and ocean health."],
+        ["15. Life on Land", "Cover biodiversity conservation, reforestation, and land-use practices."],
+        ["16. Peace, Justice, and Strong Institutions", "Promote social justice, conflict resolution, and strong governance."],
+        ["17. Partnerships for the Goals", "Include topics on global collaboration, partnership building, and cross-sectoral initiatives."],
+      ].map(function (pair) { return { id: genColId(), goal: pair[0], description: pair[1] }; }),
       facultyName: "", facultyRoom: "", facultyEmail: "", facultySignature: "",
       consultationDay: "", consultationVenue: "", consultationOnline: "",
       facultyPosition: "Faculty", coordinatorName: "", coordinatorPosition: "Coordinator", coordinatorSignature: "",
@@ -549,7 +550,7 @@
   var simpleFields = [
     "courseName", "courseCode", "lecLab", "credit", "preRequisite", "programOutcome",
     "college", "program", "revision", "semester", "academicYear", "gadStatement",
-    "courseDescription", "learningOutcomes", "sdgAlignment",
+    "courseDescription", "learningOutcomes",
     "assessmentMethods", "gradingSystem", "learningResources", "classroomPolicies",
     "facultyName", "facultyPosition", "facultyRoom", "facultyEmail",
     "consultationDay", "consultationVenue", "consultationOnline",
@@ -574,6 +575,7 @@
     document.getElementById("poCloMatrixFields").style.display = state.showPoCloMatrix ? "" : "none";
     document.getElementById("showSdgAlignment").checked = state.showSdgAlignment;
     document.getElementById("sdgAlignmentField").style.display = state.showSdgAlignment ? "" : "none";
+    renderSdgGoalsForm();
     renderWeeklyColumnsForm();
     renderWeeksForm();
     renderRubricLevelsForm();
@@ -679,6 +681,21 @@
     }
     if (typeof data.showPoCloMatrix === "boolean") state.showPoCloMatrix = data.showPoCloMatrix;
     if (typeof data.showSdgAlignment === "boolean") state.showSdgAlignment = data.showSdgAlignment;
+    if (Array.isArray(data.sdgGoals)) {
+      state.sdgGoals = data.sdgGoals.map(function (g) {
+        return {
+          id: (g && typeof g.id === "string" && g.id) || genColId(),
+          goal: (g && typeof g.goal === "string") ? g.goal : "",
+          description: (g && typeof g.description === "string") ? g.description : "",
+        };
+      });
+    } else if (typeof data.sdgAlignment === "string") {
+      // legacy format: one goal per line, "Goal Name<TAB>Description"
+      state.sdgGoals = data.sdgAlignment.split("\n").filter(function (l) { return l.trim() !== ""; }).map(function (line) {
+        var m = line.match(/^(\d+\.\s*[^\t]+?)(?:\t+|\s{2,})\s*(.*)$/);
+        return { id: genColId(), goal: m ? m[1].trim() : line.trim(), description: m ? m[2].trim() : "" };
+      });
+    }
     ["facultySignature", "coordinatorSignature", "deanSignature"].forEach(function (key) {
       if (typeof data[key] === "string") state[key] = data[key];
     });
@@ -1341,6 +1358,75 @@
     renderPreview();
   });
 
+  /* ── SDG alignment goals ── */
+  var sdgGoalsList = document.getElementById("sdgGoalsList");
+
+  function renderSdgGoalsForm() {
+    sdgGoalsList.innerHTML = "";
+    state.sdgGoals.forEach(function (g, i) {
+      var card = document.createElement("div");
+      card.className = "week-card";
+
+      var head = document.createElement("div");
+      head.className = "week-card-head";
+      var title = document.createElement("span");
+      title.textContent = "Goal " + (i + 1);
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "remove-week";
+      removeBtn.type = "button";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", function () {
+        state.sdgGoals.splice(i, 1);
+        renderSdgGoalsForm();
+        renderPreview();
+      });
+      head.appendChild(title);
+      head.appendChild(removeBtn);
+      card.appendChild(head);
+
+      var goalWrap = document.createElement("div");
+      goalWrap.className = "field";
+      var goalLabel = document.createElement("div");
+      goalLabel.className = "field-label";
+      goalLabel.textContent = "Goal";
+      var goalInput = document.createElement("input");
+      goalInput.value = g.goal;
+      goalInput.placeholder = "e.g., 1. No Poverty";
+      goalInput.addEventListener("input", function (e) {
+        g.goal = e.target.value;
+        scheduleRenderPreview();
+      });
+      goalWrap.appendChild(goalLabel);
+      goalWrap.appendChild(goalInput);
+      card.appendChild(goalWrap);
+
+      var descWrap = document.createElement("div");
+      descWrap.className = "field";
+      var descLabel = document.createElement("div");
+      descLabel.className = "field-label";
+      descLabel.textContent = "Integration Description";
+      var descInput = document.createElement("textarea");
+      descInput.rows = 3;
+      descInput.value = g.description;
+      descInput.placeholder = "e.g., Include topics on economic inequality, poverty alleviation, and inclusive economic growth.";
+      descInput.addEventListener("input", function (e) {
+        g.description = e.target.value;
+        scheduleRenderPreview();
+      });
+      descWrap.appendChild(descLabel);
+      descWrap.appendChild(descInput);
+      card.appendChild(descWrap);
+
+      sdgGoalsList.appendChild(card);
+    });
+  }
+
+  document.getElementById("addSdgGoalBtn").addEventListener("click", function () {
+    state.sdgGoals.push({ id: genColId(), goal: "", description: "" });
+    renderSdgGoalsForm();
+    renderPreview();
+  });
+
   /* ── print ── */
   document.getElementById("printBtn").addEventListener("click", function () {
     window.print();
@@ -1375,15 +1461,12 @@
 
   /* Renders the SDG alignment list as a two-column table (goal name | integration
      text), matching the reference layout rather than a plain paragraph. */
-  function buildSdgTable(v) {
-    var lines = String(v == null ? "" : v).split("\n").filter(function (l) { return l.trim() !== ""; });
-    var rows = lines.map(function (line) {
-      var m = line.match(/^(\d+\.\s*[^\t]+?)(?:\t+|\s{2,})\s*(.*)$/);
-      var goal = m ? m[1].trim() : line.trim();
-      var desc = m ? m[2].trim() : "";
+  function buildSdgTable(goals) {
+    var filtered = goals.filter(function (g) { return g.goal || g.description; });
+    var rows = filtered.map(function (g) {
       return '<tr>' +
-        '<td class="ii" style="border:1px solid #000;padding:4px 8px;font-weight:700;width:32%;vertical-align:top;">' + esc(goal) + '</td>' +
-        '<td class="ii" style="border:1px solid #000;padding:4px 8px;vertical-align:top;">&#9744;&nbsp;' + esc(desc) + '</td>' +
+        '<td class="ii" style="border:1px solid #000;padding:4px 8px;font-weight:700;width:32%;vertical-align:top;">' + esc(g.goal) + '</td>' +
+        '<td class="ii" style="border:1px solid #000;padding:4px 8px;vertical-align:top;">&#9744;&nbsp;' + esc(g.description) + '</td>' +
       '</tr>';
     }).join("");
     return '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">' +
@@ -1557,7 +1640,7 @@
       },
       {
         visible: s.showSdgAlignment, title: "COURSE ALIGNMENT WITH THE UNITED NATIONS SUSTAINABLE DEVELOPMENT GOALS",
-        body: buildSdgTable(s.sdgAlignment),
+        body: buildSdgTable(s.sdgGoals),
       },
       {
         visible: true, title: "COURSE SYLLABUS",
@@ -1675,6 +1758,7 @@
     renderCloRowsForm();
     renderFixedSignatureFields();
     renderSignatoriesForm();
+    renderSdgGoalsForm();
     document.getElementById("showPoCloMatrix").checked = state.showPoCloMatrix;
     document.getElementById("poCloMatrixFields").style.display = state.showPoCloMatrix ? "" : "none";
     document.getElementById("showSdgAlignment").checked = state.showSdgAlignment;
