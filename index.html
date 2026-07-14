@@ -365,8 +365,12 @@
 
         <!-- TAB 3: Weekly Topics -->
         <div class="tab-panel" data-panel="weekly">
-          <p class="hint">Extra columns (e.g., a custom criteria) appear at the end of every week row and the printed table.</p>
+          <p class="hint">Extra columns (e.g., a custom criteria) can be placed anywhere in the printed table.</p>
           <div id="weeklyColumnsList"></div>
+          <div class="field" style="margin-bottom:8px;max-width:320px;">
+            <label>Position for the next column</label>
+            <select id="weeklyColumnPositionSelect"></select>
+          </div>
           <button class="add-week-btn" id="addWeeklyColumnBtn" type="button">+ Add Column</button>
           <div class="section-divider"></div>
           <p class="hint">Add a row per week. Fill in each column directly.</p>
@@ -441,6 +445,40 @@
     var w = { week: "", topics: "", clo: "", activities: "", tools: "", resources: "", extra: {} };
     (cols || state.weeklyExtraColumns).forEach(function (c) { w.extra[c.id] = ""; });
     return w;
+  }
+
+  // WEEK_BASE_COLUMNS never move; custom columns from state.weeklyExtraColumns are
+  // interleaved among them (or each other) according to each column's afterKey, so a
+  // teacher can place a new column anywhere in the printed Weekly Topics table.
+  var WEEK_BASE_COLUMNS = [
+    { key: "week", label: "WEEK", width: 6, center: true, useEsc: true },
+    { key: "topics", label: "UNIT", width: 30, center: false, useEsc: false },
+    { key: "clo", label: "COURSE LEARNING OUTCOME", width: 13, center: true, useEsc: false },
+    { key: "activities", label: "TEACHING LEARNING ACTIVITIES", width: 18, center: false, useEsc: false },
+    { key: "tools", label: "ASSESSMENT TOOL/S", width: 14, center: false, useEsc: false },
+    { key: "resources", label: "LEARNING RESOURCES", width: 19, center: false, useEsc: false },
+  ];
+
+  function buildOrderedWeekColumns(s) {
+    var extraCount = s.weeklyExtraColumns.length;
+    var extraWidthEach = extraCount > 0 ? Math.min(16, 24 / extraCount) : 0;
+    var scale = (100 - extraWidthEach * extraCount) / 100;
+    var order = WEEK_BASE_COLUMNS.map(function (b) {
+      return { key: b.key, label: b.label, width: b.width * scale, center: b.center, useEsc: b.useEsc, isBase: true };
+    });
+    s.weeklyExtraColumns.forEach(function (col) {
+      var entry = { key: col.id, label: col.label || "COLUMN", width: extraWidthEach, center: false, useEsc: false, isBase: false };
+      if (col.afterKey === "__start__") {
+        order.unshift(entry);
+        return;
+      }
+      var idx = -1;
+      for (var i = 0; i < order.length; i++) {
+        if (order[i].key === col.afterKey) { idx = i; break; }
+      }
+      if (idx === -1) { order.push(entry); } else { order.splice(idx + 1, 0, entry); }
+    });
+    return order;
   }
 
   function defaultRubricLevels() {
@@ -614,6 +652,7 @@
         return {
           id: (c && typeof c.id === "string" && c.id) || genColId(),
           label: (c && typeof c.label === "string") ? c.label : "",
+          afterKey: (c && typeof c.afterKey === "string") ? c.afterKey : "__end__",
         };
       });
     }
@@ -836,6 +875,7 @@
       input.placeholder = "e.g., Values Integration";
       input.addEventListener("input", function (e) {
         col.label = e.target.value;
+        renderWeeklyColumnPositionSelect();
         scheduleRenderPreview();
       });
       fieldWrap.appendChild(input);
@@ -857,10 +897,36 @@
       row.appendChild(removeBtn);
       weeklyColumnsList.appendChild(row);
     });
+    renderWeeklyColumnPositionSelect();
+  }
+
+  function renderWeeklyColumnPositionSelect() {
+    var sel = document.getElementById("weeklyColumnPositionSelect");
+    var order = buildOrderedWeekColumns(state);
+    var prevValue = sel.value;
+    sel.innerHTML = "";
+    var startOpt = document.createElement("option");
+    startOpt.value = "__start__";
+    startOpt.textContent = "At the very beginning";
+    sel.appendChild(startOpt);
+    order.forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = c.key;
+      opt.textContent = "After “" + c.label + "”";
+      sel.appendChild(opt);
+    });
+    var endOpt = document.createElement("option");
+    endOpt.value = "__end__";
+    endOpt.textContent = "At the end";
+    sel.appendChild(endOpt);
+    var stillValid = Array.prototype.some.call(sel.options, function (o) { return o.value === prevValue; });
+    sel.value = stillValid ? prevValue : "__end__";
   }
 
   document.getElementById("addWeeklyColumnBtn").addEventListener("click", function () {
-    var newCol = { id: genColId(), label: "Column " + (state.weeklyExtraColumns.length + 1) };
+    var posSelect = document.getElementById("weeklyColumnPositionSelect");
+    var afterKey = posSelect ? posSelect.value : "__end__";
+    var newCol = { id: genColId(), label: "Column " + (state.weeklyExtraColumns.length + 1), afterKey: afterKey };
     state.weeklyExtraColumns.push(newCol);
     state.weeks.forEach(function (wk) { wk.extra[newCol.id] = ""; });
     renderWeeklyColumnsForm();
@@ -1637,18 +1703,17 @@
         esc(pair[1]) + '</td>' + extra + '</tr>';
     }).join("");
 
+    var weekColumnOrder = buildOrderedWeekColumns(s);
     var weekRows = s.weeks.length > 0
       ? s.weeks.map(function (wk, i) {
           var bg = i % 2 === 0 ? "#fff" : "#f8f8f8";
           return '<tr style="background:' + bg + ';">' +
-            '<td class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;vertical-align:top;">' + esc(wk.week) + '</td>' +
-            '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.topics) + '</td>' +
-            '<td class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;vertical-align:top;">' + multi(wk.clo) + '</td>' +
-            '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.activities) + '</td>' +
-            '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.tools) + '</td>' +
-            '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.resources) + '</td>' +
-            s.weeklyExtraColumns.map(function (col) {
-              return '<td class="ii" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">' + multi(wk.extra[col.id]) + '</td>';
+            weekColumnOrder.map(function (c) {
+              var raw = c.isBase ? wk[c.key] : wk.extra[c.key];
+              var content = c.useEsc ? esc(raw) : multi(raw);
+              var padding = c.center ? '2px 4px' : '2px 5px';
+              var align = c.center ? 'text-align:center;' : '';
+              return '<td class="ii" style="border:1px solid #000;padding:' + padding + ';' + align + 'vertical-align:top;">' + content + '</td>';
             }).join("") +
           '</tr>';
         }).join("")
@@ -1742,17 +1807,9 @@
       {
         visible: true, title: "COURSE SYLLABUS",
         body: (function () {
-          var baseHeaders = ["WEEK", "UNIT", "COURSE LEARNING OUTCOME", "TEACHING LEARNING ACTIVITIES", "ASSESSMENT TOOL/S", "LEARNING RESOURCES"];
-          var baseWidths = [6, 30, 13, 18, 14, 19];
-          var extraCount = s.weeklyExtraColumns.length;
-          var extraWidthEach = extraCount > 0 ? Math.min(16, 24 / extraCount) : 0;
-          var scale = (100 - extraWidthEach * extraCount) / 100;
-          var headers = baseHeaders.concat(s.weeklyExtraColumns.map(function (c) { return c.label || "COLUMN"; }));
-          var widths = baseWidths.map(function (w) { return (w * scale).toFixed(2); })
-            .concat(s.weeklyExtraColumns.map(function () { return extraWidthEach.toFixed(2); }));
           return '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr style="background:#ddd;">' +
-            headers.map(function (h, i) {
-              return '<th class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;width:' + widths[i] + '%;">' + esc(h).toUpperCase() + '</th>';
+            weekColumnOrder.map(function (c) {
+              return '<th class="ii" style="border:1px solid #000;padding:2px 4px;text-align:center;width:' + c.width.toFixed(2) + '%;">' + esc(c.label).toUpperCase() + '</th>';
             }).join("") +
           '</tr></thead><tbody>' + weekRows + '</tbody></table>';
         })(),
